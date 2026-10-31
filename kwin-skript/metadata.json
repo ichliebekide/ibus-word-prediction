@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "emi"
+            }
+        ],
+        "Description": "Shows the input method's suggestion bar above the text cursor instead of below it",
+        "Icon": "input-keyboard",
+        "Id": "wortvorhersage-oben",
+        "License": "MIT",
+        "Name": "Word Prediction Above",
+        "Version": "0.1",
+        "Name[de]": "Wortvorhersage oben",
+        "Description[de]": "Zeigt die Vorschlagsleiste der Eingabemethode über dem Textcursor statt darunter"
+    },
+    "X-Plasma-API": "javascript",
+    "X-Plasma-MainScript": "code/main.js"
+}
