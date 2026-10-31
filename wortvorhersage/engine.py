@@ -218,7 +218,7 @@ class Engine(IBus.EngineSimple):
             self.auto_leerzeichen = False
             self._satzzeichen_folgt(zeichen)
             self._leiste_leeren()
-            self._ersetzen(1, zeichen)
+            self._ersetzen(" ", zeichen)
             return self._schlucken(keyval)
 
         if keyval in ENTER or (zeichen.isprintable() and zeichen != "\0"):
@@ -314,7 +314,7 @@ class Engine(IBus.EngineSimple):
 
         if vorschlag.ist_emoji:
             if einstellungen.schalter("emoji_ersetzt_wort") and getippt:
-                self._ersetzen(len(getippt), vorschlag.text + leerzeichen)
+                self._ersetzen(getippt, vorschlag.text + leerzeichen)
                 self.wort = ""
             else:
                 self._wort_beenden()
@@ -328,7 +328,7 @@ class Engine(IBus.EngineSimple):
         if vorschlag.text.startswith(getippt):
             self._einfuegen(vorschlag.text[len(getippt):] + leerzeichen)
         else:
-            self._ersetzen(len(getippt), vorschlag.text + leerzeichen)
+            self._ersetzen(getippt, vorschlag.text + leerzeichen)
         self.wort = vorschlag.text
         self._wort_beenden()
         self.auto_leerzeichen = bool(leerzeichen)
@@ -343,21 +343,28 @@ class Engine(IBus.EngineSimple):
         if text:
             self.commit_text(IBus.Text.new_from_string(text))
 
-    def _ersetzen(self, anzahl, text):
-        """Löscht `anzahl` Zeichen vor dem Cursor und fügt `text` ein."""
-        if anzahl <= 0:
+    def _ersetzen(self, alt, text):
+        """Löscht `alt` direkt vor dem Cursor und fügt `text` ein."""
+        if not alt:
             self._einfuegen(text)
-        elif self._umgebung_zuverlaessig(anzahl):
-            self.delete_surrounding_text(-anzahl, anzahl)
+        elif self._umgebung_passt(alt):
+            log.debug("ersetzen über umgebenden Text")
+            self.delete_surrounding_text(-len(alt), len(alt))
             self._einfuegen(text)
         else:
-            for _ in range(anzahl):
+            log.debug("ersetzen über Rücktasten")
+            for _ in range(len(alt)):
                 self.forward_key_event(IBus.KEY_BackSpace, KEYCODE_RUECKTASTE, 0)
                 self.forward_key_event(IBus.KEY_BackSpace, KEYCODE_RUECKTASTE, M.RELEASE_MASK)
             GLib.timeout_add(VERZOEGERUNG_NACH_RUECKTASTE_MS, lambda: self._einfuegen(text) and False)
 
-    def _umgebung_zuverlaessig(self, anzahl):
-        """Nur wenn die App den Text vor dem Cursor wirklich meldet, löschen wir darüber."""
+    def _umgebung_passt(self, alt):
+        """Löschen über den umgebenden Text nur, wenn die App genau `alt` vor dem Cursor meldet.
+
+        Unter Wayland rechnet ibus die Löschung anhand des zuletzt gemeldeten Texts in Bytes um.
+        Ist der veraltet (die App hat die letzten Tasten noch nicht gemeldet) oder meldet die App
+        gar nichts, wird zu wenig oder nichts gelöscht – dann lieber Rücktasten schicken.
+        """
         if not self.faehigkeiten & IBus.Capabilite.SURROUNDING_TEXT:
             return False
         try:
@@ -365,7 +372,7 @@ class Engine(IBus.EngineSimple):
         except TypeError:
             return False
         vorher = text.get_text()[:cursor] if text else ""
-        return len(vorher) >= anzahl and vorher.strip() != ""
+        return vorher.endswith(alt)
 
     # ------------------------------------------------------------ Menü
 

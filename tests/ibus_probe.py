@@ -59,6 +59,8 @@ class App:
         self.ic.connect("update-lookup-table", self._leiste)
         self.ic.connect("hide-lookup-table", lambda _: setattr(self, "leiste_sichtbar", False))
         self.menue = {}
+        # Wie eine App, die den Text vor dem Cursor nicht (mehr) meldet: Löschen darüber verpufft.
+        self.umgebung_eingefroren = False
         self.ic.connect("register-properties", self._menue)
         self.ic.connect("update-property", lambda _, e: self.menue.update({e.get_key(): e}))
         self.ic.focus_in()
@@ -76,6 +78,8 @@ class App:
         self._umgebung()
 
     def _loeschen(self, _, versatz, anzahl):
+        if self.umgebung_eingefroren:
+            return
         assert versatz == -anzahl, (versatz, anzahl)
         self.text = self.text[:versatz]
         self._umgebung()
@@ -97,6 +101,8 @@ class App:
             i += 1
 
     def _umgebung(self):
+        if self.umgebung_eingefroren:
+            return
         self.ic.set_surrounding_text(IBus.Text.new_from_string(self.text), len(self.text), len(self.text))
 
     def _taste_in_app(self, keyval):
@@ -226,6 +232,17 @@ def main():
         app.tippen("Zeile hoc")
         app.taste(IBus.KEY_Down)
         pruefe("Pfeil runter ohne Auswahl geht an die App, Kontext weg", app.leiste_sichtbar, False)
+
+        # --- App meldet veralteten Text: nicht darüber löschen („kuchKuchen“)
+        app.neu()
+        app.tippen("der ")
+        app.umgebung_eingefroren = True
+        app.tippen("kuch")
+        app.taste(IBus.KEY_Up)
+        app.taste(IBus.KEY_Return)
+        app.warten(0.1)
+        pruefe("veralteter Text vor dem Cursor → Rücktasten", app.text, "der Kuchen ")
+        app.umgebung_eingefroren = False
 
         # --- App ohne umgebenden Text (z. B. Terminal): Korrektur über zurückgeschickte Rücktasten
         app.ic.set_capabilities(IBus.Capabilite.FOCUS | IBus.Capabilite.PROPERTY | IBus.Capabilite.LOOKUP_TABLE)
