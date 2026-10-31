@@ -2,6 +2,8 @@
 
 **English** · [Deutsch](README.de.md)
 
+![Suggestion bar above the text: typing “pizz” suggests Pizza, Pizzeria and 🍕](docs/screenshot.png)
+
 Text suggestions while typing on a physical keyboard, like Windows' "text suggestions for hardware keyboard", as an IBus engine for Linux (tested on KDE Plasma 6 with Wayland).
 
 - What you type goes straight into the app, and a bar with suggestions appears above it.

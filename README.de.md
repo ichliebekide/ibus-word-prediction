@@ -2,6 +2,8 @@
 
 [English](README.md) · **Deutsch**
 
+![Vorschlagsleiste über dem Text: „pizz“ schlägt Pizza, Pizzeria und 🍕 vor](docs/screenshot.png)
+
 Textvorschläge beim Tippen auf der normalen Tastatur, wie die „Textvorschläge für Hardwaretastatur“ von Windows – als IBus-Engine für Linux (getestet mit KDE Plasma 6 unter Wayland).
 
 - Getippter Text geht sofort in die App, darüber erscheint eine Leiste mit Vorschlägen.
