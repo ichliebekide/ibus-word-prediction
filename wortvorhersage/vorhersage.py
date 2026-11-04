@@ -16,6 +16,9 @@ WORT_MUSTER = re.compile(r"[^\W\d_]+(?:[-'’][^\W\d_]+)*")
 
 DATEN = Path(__file__).resolve().parent.parent / "daten"
 
+# Sprachcodes aus der Einstellungsdatei landen im Dateinamen; nur „de“, „en“ usw. zulassen.
+SPRACHCODE = re.compile(r"[a-z]{2,3}")
+
 # Gewichte für die Bewertung. Ein gelerntes oder eigenes Wort schlägt fast jedes Wörterbuchwort.
 GEWICHT_GELERNT = 400.0
 GEWICHT_EIGEN = 20000.0
@@ -38,6 +41,8 @@ class Woerterbuch:
         self.formen = []       # Schreibweise passend zu schluessel
         self.anteil = []       # Häufigkeit pro Million Wörter
         self.paare = {}        # vorher (klein) -> [(danach klein, anteil)]
+        if not SPRACHCODE.fullmatch(sprache):
+            return
         self._laden(daten / f"{sprache}_woerter.tsv", daten / f"{sprache}_paare.tsv")
 
     def _laden(self, woerter_pfad, paare_pfad):
@@ -127,6 +132,7 @@ def schreibweise_anpassen(vorschlag, getippt):
 
 class Vorhersage:
     def __init__(self, sprachen=("de", "en"), lernspeicher=None, eigene_woerter=(), daten=DATEN):
+        sprachen = [s.lower() for s in sprachen if SPRACHCODE.fullmatch(s.lower())]
         self.woerterbuecher = [Woerterbuch(s, daten) for s in sprachen]
         self.emojis = Emojis(daten / "emoji.tsv")
         self.lernspeicher = lernspeicher
